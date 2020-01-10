@@ -121,7 +121,8 @@ angular.module('dauriaSearchApp')
     $scope.firstZoomDone = false;
 
     // Move to user's IP location, fall back to east of San Fran
-    var demoCenter = { lat: 37.7833, lng: -115.4167, zoom: 6 };
+    // NEW_ERA: ставим Башкортостан по центру экрана вместо Сан-Франциско
+    var demoCenter = { lat: 54.5, lng: 56.5, zoom: 7 };
     $http.get('https://vast-coast-1838.herokuapp.com/location')
       .success(function(data) {
         // Do nothing if the user has already moved their location
