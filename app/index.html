@@ -33,10 +33,10 @@
             <div class="main-filter-display">
               <!-- this "bad" html formatting is done purposefully to fix inline-block element spacing -->
               <div ng-click="toggleOpenFilter('date')" ng-class="{'active': openFilter === 'date'}" class="date-filter-display filter-display">
-              <img src="images/noun_2019_cc_noattr_w.png" title="Date" />: <span id="lower" ng-bind="dateRangeStartTemp"></span>&nbsp;<span ng-bind-template="to"></span>&nbsp;<span id="upper" ng-bind="dateRangeEndTemp"></span></div><div ng-click="toggleOpenFilter('cloud')" ng-class="{'active': openFilter === 'cloud'}" class="cloud-filter-display filter-display">
-              <img src="images/noun_88351_cc_noattr_w.png" title="Cloud Coverage" />: <span ng-bind-template="{{cloudCoverageMin | suffix:'per'}} - {{cloudCoverageMax | suffix:'per'}} "></span></div><div ng-click="toggleOpenFilter('sun')" ng-class="{'active': openFilter === 'sun'}" class="sun-filter-display filter-display">
-              <img src="images/noun_88350_cc_noattr_w.png" title="Sun Azimuth" />: <span ng-bind-template="{{sunAzimuthMin | suffix:'deg'}} - {{sunAzimuthMax | suffix:'deg'}}"></span></div><div ng-click="openModal()" class="filter-display info">
-              <img src="images/noun_52713_cc_noattr_w.png" title="Info" /></div>
+              <img src="images/noun_2019_cc_noattr_w.png" title="Дата" />: <span id="lower" ng-bind="dateRangeStartTemp"></span>&nbsp;<span ng-bind-template="to"></span>&nbsp;<span id="upper" ng-bind="dateRangeEndTemp"></span></div><div ng-click="toggleOpenFilter('cloud')" ng-class="{'active': openFilter === 'cloud'}" class="cloud-filter-display filter-display">
+              <img src="images/noun_88351_cc_noattr_w.png" title="Облачный покров" />: <span ng-bind-template="{{cloudCoverageMin | suffix:'per'}} - {{cloudCoverageMax | suffix:'per'}} "></span></div><div ng-click="toggleOpenFilter('sun')" ng-class="{'active': openFilter === 'sun'}" class="sun-filter-display filter-display">
+              <img src="images/noun_88350_cc_noattr_w.png" title="Азимут солнца" />: <span ng-bind-template="{{sunAzimuthMin | suffix:'deg'}} - {{sunAzimuthMax | suffix:'deg'}}"></span></div><div ng-click="openModal()" class="filter-display info">
+              <img src="images/noun_52713_cc_noattr_w.png" title="Информация" /></div>
             </div>
             <div ng-if="openFilter === 'cloud'" class="filter-container cloud-container">
               <div class="cloudCoverSlider"></div>
@@ -59,9 +59,9 @@
           <div class="results-pane">
             <div>
               <div class="sort" ng-if="selectedResult === null">
-                <a href="" role="button" class="btn btn-default" ng-class="{'active':sortField === 'acquisitionDate'}" ng-click="setSortExpression('acquisitionDate')"><img src="images/noun_2019_cc_noattr_w.png" title="Date" /><span ng-if="sortField === 'acquisitionDate' && !sortReverse">&#x2191;</span><span ng-if="sortField === 'acquisitionDate' && sortReverse">&#x2193;</span></a>
-                <a href="" role="button" class="btn btn-default" ng-class="{'active':sortField === 'cloudCoverFull'}" ng-click="setSortExpression('cloudCoverFull')"><img src="images/noun_88351_cc_noattr_w.png" title="Cloud Coverage" /><span ng-if="sortField === 'cloudCoverFull' && !sortReverse">&#x2191;</span><span ng-if="sortField === 'cloudCoverFull' && sortReverse">&#x2193;</span></a>
-                <a href="" role="button" class="btn btn-default" ng-class="{'active':sortField === 'sunAzimuth'}" ng-click="setSortExpression('sunAzimuth')"><img src="images/noun_88350_cc_noattr_w.png" title="Sun Azimuth" /><span ng-if="sortField === 'sunAzimuth' && !sortReverse">&#x2191;</span><span ng-if="sortField === 'sunAzimuth' && sortReverse">&#x2193;</span></a>
+                <a href="" role="button" class="btn btn-default" ng-class="{'active':sortField === 'acquisitionDate'}" ng-click="setSortExpression('acquisitionDate')"><img src="images/noun_2019_cc_noattr_w.png" title="Дата" /><span ng-if="sortField === 'acquisitionDate' && !sortReverse">&#x2191;</span><span ng-if="sortField === 'acquisitionDate' && sortReverse">&#x2193;</span></a>
+                <a href="" role="button" class="btn btn-default" ng-class="{'active':sortField === 'cloudCoverFull'}" ng-click="setSortExpression('cloudCoverFull')"><img src="images/noun_88351_cc_noattr_w.png" title="Облачный покров" /><span ng-if="sortField === 'cloudCoverFull' && !sortReverse">&#x2191;</span><span ng-if="sortField === 'cloudCoverFull' && sortReverse">&#x2193;</span></a>
+                <a href="" role="button" class="btn btn-default" ng-class="{'active':sortField === 'sunAzimuth'}" ng-click="setSortExpression('sunAzimuth')"><img src="images/noun_88350_cc_noattr_w.png" title="Азимут солнца" /><span ng-if="sortField === 'sunAzimuth' && !sortReverse">&#x2191;</span><span ng-if="sortField === 'sunAzimuth' && sortReverse">&#x2193;</span></a>
               </div>
             </div>
             <div class="scroll">
@@ -71,8 +71,8 @@
                     <img class="thumb pull-right" ng-src="{{result.aws_thumbnail}}"/>
                     <div class="result-overlay">
                       <div><span ng-bind="result.acquisitionDate"></span><img class="table-icon" src="images/noun_2019_cc_noattr_w.png" title="Date" /></div>
-                      <div><span ng-bind="result.cloud_coverage | number:2 | suffix:'per'"></span><img class="table-icon" src="images/noun_88351_cc_noattr_w.png" title="Cloud Coverage" /></div>
-                      <div><span ng-bind="result.sunAzimuth | number:2 | suffix:'deg'"></span><img class="table-icon" src="images/noun_88350_cc_noattr_w.png" title="Sun Azimuth" /></div>
+                      <div><span ng-bind="result.cloud_coverage | number:2 | suffix:'per'"></span><img class="table-icon" src="images/noun_88351_cc_noattr_w.png" title="Облачный покров" /></div>
+                      <div><span ng-bind="result.sunAzimuth | number:2 | suffix:'deg'"></span><img class="table-icon" src="images/noun_88350_cc_noattr_w.png" title="Азимут солнца" /></div>
                     </div>
                   </div>
                 </div>
@@ -83,8 +83,8 @@
                     <img class="thumb pull-right" ng-src="{{result.aws_thumbnail}}"/>
                     <div class="result-overlay">
                       <div><span ng-bind="result.acquisitionDate"></span><img class="table-icon" src="images/noun_2019_cc_noattr_w.png" title="Date" /></div>
-                      <div><span ng-bind="result.cloud_coverage | number:2 | suffix:'per'"></span><img class="table-icon" src="images/noun_88351_cc_noattr_w.png" title="Cloud Coverage" /></div>
-                      <div><span ng-bind="result.sunAzimuth | number:2 | suffix:'deg'"></span><img class="table-icon" src="images/noun_88350_cc_noattr_w.png" title="Sun Azimuth" /></div>
+                      <div><span ng-bind="result.cloud_coverage | number:2 | suffix:'per'"></span><img class="table-icon" src="images/noun_88351_cc_noattr_w.png" title="Облачный покров" /></div>
+                      <div><span ng-bind="result.sunAzimuth | number:2 | suffix:'deg'"></span><img class="table-icon" src="images/noun_88350_cc_noattr_w.png" title="Ахимут солнца" /></div>
                     </div>
                   </div>
                 </div>
@@ -102,14 +102,14 @@
                 </div>
 
                 <div class="result-data">
-                  <img src="images/noun_2019_cc_noattr.png" title="Date" /><span ng-bind="selectedResult.acquisitionDate"></span>
-                  <img src="images/noun_88351_cc_noattr.png" title="Cloud Coverage" /><span ng-bind="selectedResult.cloud_coverage | number:2 | suffix:'per'"></span>
-                  <img src="images/noun_88350_cc_noattr.png" title="Sun Azimuth" /><span ng-bind="selectedResult.sunAzimuth | number:2 | suffix:'deg'"></span>
+                  <img src="images/noun_2019_cc_noattr.png" title="Дата" /><span ng-bind="selectedResult.acquisitionDate"></span>
+                  <img src="images/noun_88351_cc_noattr.png" title="Облачный покров" /><span ng-bind="selectedResult.cloud_coverage | number:2 | suffix:'per'"></span>
+                  <img src="images/noun_88350_cc_noattr.png" title="Азимут солнца" /><span ng-bind="selectedResult.sunAzimuth | number:2 | suffix:'deg'"></span>
                 </div>
 
-                <a target="_blank" ng-href="https://earthexplorer.usgs.gov/download/12864/{{selectedResult.sceneID}}/STANDARD/EE" class="btn btn-primary" ng-bind-template="Download Bundle" ng-click="downloadTrack()"></a>
-                <a href="#" class="btn btn-primary" ng-class="{'disabled': Number(selectedResult.sceneID.substring(9,13)) < 2015 }" ng-bind-template="Download Bands" ng-click="openAdvancedDownload()"></a>
-                <p class="download-info" ng-bind-template="Bundled downloads are available within one week of the image being taken. Individual bands are available for all scenes starting in 2015."></p>
+                <a target="_blank" ng-href="https://earthexplorer.usgs.gov/download/12864/{{selectedResult.sceneID}}/STANDARD/EE" class="btn btn-primary" ng-bind-template="Загрузка архива" ng-click="downloadTrack()"></a>
+                <a href="#" class="btn btn-primary" ng-class="{'disabled': Number(selectedResult.sceneID.substring(9,13)) < 2015 }" ng-bind-template="Загрузка каналов" ng-click="openAdvancedDownload()"></a>
+                <p class="download-info" ng-bind-template="Архив снимка доступен спустя неделю после осуществления съемки. Отдельные каналы доступны для всех сцен с 2015 г."></p>
               </div>
             </div>
 
