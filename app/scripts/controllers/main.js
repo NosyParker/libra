@@ -19,6 +19,11 @@ angular.module('dauriaSearchApp')
     var endpoint = 'https://api.developmentseed.org/satellites';
     var canceller = $q.defer();
 
+    //NEW_ERA: новое АПИ для поиска
+    const NEW_ERA_ENDPOINT = 'https://sat-api.developmentseed.org/stac/search'; 
+
+
+
     // Cloud coverage.
     $scope.cloudCoverageMin = 0;
     $scope.cloudCoverageMax = 20;
@@ -180,8 +185,9 @@ angular.module('dauriaSearchApp')
     };
 
     /**
-     * Queries the Api for resources.
+     * Queries the Api for resources. 
      */
+    // NEW_ERA: основная функция для поиска снимков/выполнения запросов к АПИ
     $scope.execQuery = function() {
       // cancel any existing requests and renew canceller
       canceller.resolve();
@@ -249,9 +255,8 @@ angular.module('dauriaSearchApp')
           }
         } else {
           // Not showing anything because we have too many results, let user know
-          var msg = 'Looks like we have too much data in our catalogs to show you!<br/><br/>' +
-                    'Try zooming in or changing the date range to narrow it ' +
-                    'down a bit.';
+          var msg = 'Слишком много данных, чтобы отобразить их на карте!<br/><br/>' +
+                    'Попробуйте приблизиться к области интереса или уменьшить диапазон даты.';
           setInfoPane(msg); // Show helpful message
           // also clear paths and rowPath selection and selectedResult because why not
           $scope.paths = {};
@@ -265,14 +270,12 @@ angular.module('dauriaSearchApp')
         // need to check for an error because cancelling the request also sends us here
         if (status !== 0) {
           $scope.results = [];
-          var msg = 'Oops, looks like we ran into an unknown error with the ' +
-                    'data service, repositioning the satellite for you.';
+          var msg = 'Похоже что-то пошло не так с сервисом, который предоставляет снимки.';
           $scope.satellite = true;
           $scope.satGif = $sce.trustAsHtml('<img src="images/satellite.gif" />');
           if (data && data.error && data.error.code) {
             if (data.error.code === 'NOT_FOUND') {
-              msg = 'Oops, looks like you zoomed in too much, try zooming out ' +
-                    'to get more results.';
+              msg = 'Похоже, что вы зашли слишком далеко с приближением к области интереса, поэтому попробуйте отдалиться, чтобы получить данные';
               $scope.satellite = false;
             }
           }
@@ -719,9 +722,26 @@ angular.module('dauriaSearchApp')
       });
     }
 
+
+    //NEW_ARA: функция для конструирования параметров в GET запросе к АПИ
+
     function queryConstructor (options) {
       var queryString;
       var query = [];
+      
+
+      //NEW_ERA: GET /search?time=2019-01-01/2019-02-02 -> пример установки параметров в строке запроса для периода времени
+
+      //NEW_ERA: ЧТОБЫ ПЕРЕДАВАТЬ QUERY В GET НЕОБХОДИМО: 
+      // 1. СДЕЛАТЬ ОБЪЕКТ QUERY КАК В ДОКЕ: {"eo:cloud_cover":{"lt":50}}
+      // 2. ПРЕВРАТИТЬ ЭТОТ ОБЪЕКТ В СТРОКУ ЧЕРЕЗ JSON.stringify(object)
+      // 3. ЗАКОДИРОВАТЬ СТРОКУ ДЛЯ ВСТАВКИ В URL ЧЕРЕЗ encodeURIComponent(str)
+      // 4. ВСТАВИТЬ ИТОГОВУЮ СТРОКУ В GET ПАРАМЕТР ?query=
+
+
+      //NEW_ERA: для поиска ландсатовских только снимков, в query необходимо добавить свойство: "collection" : {"eq":"landsat-8-l1"}
+      // для сентинела 2 => "collection":{"eq":"sentinel-2-l1c"}
+      // если оба спутника => не указывать collection совсем!
 
       // dateRange -- array of date strings. format: [YYYY-MM-DD,YYYY-MM-DD]
       var dateRange = options.dateRange || ['2014-01-01', '2015-01-05'];
