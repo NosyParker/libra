@@ -20,7 +20,7 @@ angular.module('dauriaSearchApp')
     var canceller = $q.defer();
 
     //NEW_ERA: новое АПИ для поиска
-    const NEW_ERA_ENDPOINT = 'https://sat-api.developmentseed.org/stac/search'; 
+    const NEW_ERA_ENDPOINT = 'https://sat-api.developmentseed.org/stac/search';
 
 
 
@@ -184,11 +184,62 @@ angular.module('dauriaSearchApp')
       }
     };
 
-    /**
-     * Queries the Api for resources. 
-     */
-    // NEW_ERA: основная функция для поиска снимков/выполнения запросов к АПИ
-    $scope.execQuery = function() {
+
+    // NEW_ERA: адаптер, чтобы из данных нового API получить старые аналоги
+    $scope.NEW_ERA_ADAPTER_FOR_SCENE_RESULTS = function(sceneOfNewApi) {
+      let scene = {};
+
+      scene.acquisitionDate = new Date(sceneOfNewApi.properties.datetime).toISOString().slice(0,10);
+      scene.sceneID = sceneOfNewApi.properties["landsat:scene_id"];
+      scene.product_id = sceneOfNewApi.properties["landsat:product_id"];
+      scene.row = sceneOfNewApi.properties["eo:row"];
+      scene.path = sceneOfNewApi.properties["eo:column"];;
+      scene.className = `${scene.sceneID}-${scene.row}-${scene.path}`;
+
+      let sceneCenterLongitude = (sceneOfNewApi.bbox[0] + sceneOfNewApi.bbox[2]) / 2;
+      let sceneCenterLatitude = (sceneOfNewApi.bbox[1] + sceneOfNewApi.bbox[3]) / 2;
+
+      scene.sceneCenterLatitude = sceneCenterLatitude;
+      scene.lat = scene.sceneCenterLatitude;
+
+      scene.sceneCenterLongitude = sceneCenterLongitude;
+      if (scene.sceneCenterLongitude > 0) {
+        scene.lng = scene.sceneCenterLongitude + Math.floor(($scope.bounds.southWest.lng + 180) / 360) * 360;
+      }
+      else {
+        scene.lng = scene.sceneCenterLongitude + Math.floor(($scope.bounds.northEast.lng + 180) / 360) * 360;
+      }
+
+      scene.upperLeftCornerLongitude = sceneOfNewApi.geometry.coordinates[0][0][0];
+      scene.upperLeftCornerLatitude = sceneOfNewApi.geometry.coordinates[0][0][1];
+
+      scene.upperRightCornerLongitude = sceneOfNewApi.geometry.coordinates[0][1][0];
+      scene.upperRightCornerLatitude = sceneOfNewApi.geometry.coordinates[0][1][1];
+
+      scene.lowerRightCornerLongitude = sceneOfNewApi.geometry.coordinates[0][2][0];
+      scene.lowerRightCornerLatitude = sceneOfNewApi.geometry.coordinates[0][2][1];
+
+      scene.lowerLeftCornerLongitude = sceneOfNewApi.geometry.coordinates[0][3][0];
+      scene.lowerLeftCornerLatitude = sceneOfNewApi.geometry.coordinates[0][3][1];
+
+
+      scene.cloud_coverage = sceneOfNewApi.properties["eo:cloud_cover"];
+      scene.cloudCoverFull = scene.cloud_coverage;
+      scene.sunAzimuth = sceneOfNewApi.properties["eo:sun_azimuth"];
+
+      scene.icon = {};
+      scene.icon.type = 'div';
+      scene.icon.className = 'map-icon text-center';
+
+      scene.aws_thumbnail = sceneOfNewApi.assets.thumbnail.href;
+
+      scene.downloadURL = 'https://storage.googleapis.com/earthengine-public/landsat/L8/' + zeroPad(scene.path, 3) + '/' + zeroPad(scene.row, 3) + '/' + scene.sceneID + '.tar.bz';
+
+      return scene;
+    }
+
+    // NEW_ERA: запросы к новому АПИ
+    $scope.execQuery = function () {
       // cancel any existing requests and renew canceller
       canceller.resolve();
       canceller = $q.defer();
@@ -200,11 +251,11 @@ angular.module('dauriaSearchApp')
       $scope.satellite = false;
 
       // check continuity of longitude range (bool)
-      var continuous =  Math.floor(($scope.bounds.northEast.lng + 180) / 360) === Math.floor(($scope.bounds.southWest.lng + 180) / 360);
+      var continuous = Math.floor(($scope.bounds.northEast.lng + 180) / 360) === Math.floor(($scope.bounds.southWest.lng + 180) / 360);
 
-      $scope.searchString = queryConstructor({
+      $scope.searchString = NEW_ERA_QUERY_CONSTRUCTOR({
         dateRange: [$scope.dateRangeStart, $scope.dateRangeEnd],
-        limit: 3000,
+        limit: 500,
         sceneCenterLatRange: [$scope.bounds.northEast.lat, $scope.bounds.southWest.lat],
         // mod function here supports negative modulo in the 'expected fashion'
         // we are treating the longitude this way to support multiple rotations around the earth
@@ -212,82 +263,192 @@ angular.module('dauriaSearchApp')
         continuous: continuous
       });
 
-      $http.get(endpoint + '/landsat?search=' + $scope.searchString, { timeout: canceller.promise })
-        .success(function(data) {
-        setInfoPane(); // Hide info pane so it doesn't flash when results are redrawn
-        var total = data.meta.found;
-        $scope.results = [];
-        $scope.markers = {};
-        // clear histograms
-        d3.select('.cloudCoverSlider svg').selectAll('.bar').remove();
-        d3.select('.sunAzimuthSlider svg').selectAll('.bar').remove();
-        // only renew results if we have a 'resonable' number
-        if (total < 3000){
-          for (var i=0; i < data.results.length; i++){
-            var scene = data.results[i];
-            scene.className = scene.sceneID + '-' + scene.row + '-' + scene.path;
-            scene.lat = scene.sceneCenterLatitude;
-            // correction for being on "left or right earths"
-            // we force everything to be in our map range
-            // rotate according to which part of the range the scene is in
-            // for continuous ranges, it doesn't matter but this covers all cases
-            if (scene.sceneCenterLongitude > 0) {
-              scene.lng = scene.sceneCenterLongitude + Math.floor(($scope.bounds.southWest.lng + 180) / 360) * 360;
-            }
-            else {
-              scene.lng = scene.sceneCenterLongitude + Math.floor(($scope.bounds.northEast.lng + 180) / 360) * 360;
-            }
-            scene.icon = {};
-            scene.icon.type = 'div';
-            scene.icon.className = 'map-icon text-center';
-            scene.downloadURL = 'https://storage.googleapis.com/earthengine-public/landsat/L8/' + zeroPad(scene.path,3) + '/' + zeroPad(scene.row,3) + '/' + scene.sceneID + '.tar.bz';
-            $scope.results.push(scene);
-          }
-          updateMarkers();
-          if ($scope.openFilter === 'cloud' || $scope.openFilter === 'sun' ){
-            var helperNames = ($scope.openFilter === 'cloud') ? {main:'cloudCover', val: 'cloud_coverage', bound: 100, bin: 20} : {main:'sunAzimuth', val: 'sunAzimuth', bound: 180, bin: 36};
-            var vals = $scope.results.map(function(result){ return Math.max(result[helperNames.val],0); });
-            if ($scope.openFilter === 'sun'){
-              vals = vals.filter(function(sun){ return sun > 0;});
-            }
-            var size = getSize($scope.openFilter);
-            $scope.updateHistogram('.' + helperNames.main + 'Slider', vals, [0, helperNames.bound], helperNames.bin, size);
-          }
-        } else {
-          // Not showing anything because we have too many results, let user know
-          var msg = 'Слишком много данных, чтобы отобразить их на карте!<br/><br/>' +
-                    'Попробуйте приблизиться к области интереса или уменьшить диапазон даты.';
-          setInfoPane(msg); // Show helpful message
-          // also clear paths and rowPath selection and selectedResult because why not
-          $scope.paths = {};
-          $scope.rowPathSelect = null;
-          $scope.selectedResult = null; // should either clear the selection or prevent the message
-        }
+      const finalQueryStr = `${NEW_ERA_ENDPOINT}${$scope.searchString}`;
+      console.log("Итоговая строка запроса для АПИ: ", finalQueryStr)
 
-        // stop the spinner
-        $scope.spinner.stop();
-      }).error(function (data, status) {
-        // need to check for an error because cancelling the request also sends us here
-        if (status !== 0) {
+      $http.get(finalQueryStr, { timeout: canceller.promise })
+        .success(function (data) {
+          setInfoPane(); // Hide info pane so it doesn't flash when results are redrawn
+
+          console.log("Выполнили запрос по НОВОМУ АПИ и получили результат:", data);
+
+          let total = data.meta.found;
+          const results = data.features;
+          const resultLength = results.length;
           $scope.results = [];
-          var msg = 'Похоже что-то пошло не так с сервисом, который предоставляет снимки.';
-          $scope.satellite = true;
-          $scope.satGif = $sce.trustAsHtml('<img src="images/satellite.gif" />');
-          if (data && data.error && data.error.code) {
-            if (data.error.code === 'NOT_FOUND') {
-              msg = 'Похоже, что вы зашли слишком далеко с приближением к области интереса, поэтому попробуйте отдалиться, чтобы получить данные';
-              $scope.satellite = false;
+          $scope.markers = {};
+
+          // clear histograms
+          d3.select('.cloudCoverSlider svg').selectAll('.bar').remove();
+          d3.select('.sunAzimuthSlider svg').selectAll('.bar').remove();
+
+          if (total < 3000) {
+            for (let i = 0; i < resultLength; i++) {
+              const scene = $scope.NEW_ERA_ADAPTER_FOR_SCENE_RESULTS(results[i]);
+
+              $scope.results.push(scene);
             }
+
+            updateMarkers();
+
+            if ($scope.openFilter === 'cloud' || $scope.openFilter === 'sun') {
+              var helperNames = ($scope.openFilter === 'cloud') ? { main: 'cloudCover', val: 'cloud_coverage', bound: 100, bin: 20 } : { main: 'sunAzimuth', val: 'sunAzimuth', bound: 180, bin: 36 };
+              var vals = $scope.results.map(function (result) { return Math.max(result[helperNames.val], 0); });
+              if ($scope.openFilter === 'sun') {
+                vals = vals.filter(function (sun) { return sun > 0; });
+              }
+              var size = getSize($scope.openFilter);
+              $scope.updateHistogram('.' + helperNames.main + 'Slider', vals, [0, helperNames.bound], helperNames.bin, size);
+            }
+
           }
-          setInfoPane(msg); // Show nice error message
-          $scope.paths = {};
-          $scope.rowPathSelect = null;
-          $scope.selectedResult = null; // should either clear the selection or prevent the message
+          else {
+            // Not showing anything because we have too many results, let user know
+            var msg = 'Слишком много данных, чтобы отобразить их на карте!<br/><br/>' +
+              'Попробуйте приблизиться к области интереса или уменьшить диапазон даты.';
+            setInfoPane(msg); // Show helpful message
+            // also clear paths and rowPath selection and selectedResult because why not
+            $scope.paths = {};
+            $scope.rowPathSelect = null;
+            $scope.selectedResult = null; // should either clear the selection or prevent the message
+          }
+
           // stop the spinner
           $scope.spinner.stop();
-        }
-      });
+
+        })
+        .error(function (data, status) {
+          // need to check for an error because cancelling the request also sends us here
+          if (status !== 0) {
+            $scope.results = [];
+            var msg = 'Похоже что-то пошло не так с сервисом, который предоставляет снимки.';
+            $scope.satellite = true;
+            $scope.satGif = $sce.trustAsHtml('<img src="images/satellite.gif" />');
+            if (data && data.error && data.error.code) {
+              if (data.error.code === 'NOT_FOUND') {
+                msg = 'Похоже, что вы зашли слишком далеко с приближением к области интереса, поэтому попробуйте отдалиться, чтобы получить данные';
+                $scope.satellite = false;
+              }
+            }
+            setInfoPane(msg); // Show nice error message
+            $scope.paths = {};
+            $scope.rowPathSelect = null;
+            $scope.selectedResult = null; // should either clear the selection or prevent the message
+            // stop the spinner
+            $scope.spinner.stop();
+          }
+        });
     };
+
+
+    /**
+     * Queries the Api for resources.
+     */
+    // // NEW_ERA: основная функция для поиска снимков/выполнения запросов к АПИ
+    // $scope.execQuery = function() {
+    //   // cancel any existing requests and renew canceller
+    //   canceller.resolve();
+    //   canceller = $q.defer();
+
+    //   // spin!
+    //   $scope.spinner.spin(target);
+
+    //   // no satellite gif
+    //   $scope.satellite = false;
+
+    //   // check continuity of longitude range (bool)
+    //   var continuous =  Math.floor(($scope.bounds.northEast.lng + 180) / 360) === Math.floor(($scope.bounds.southWest.lng + 180) / 360);
+
+    //   $scope.searchString = queryConstructor({
+    //     dateRange: [$scope.dateRangeStart, $scope.dateRangeEnd],
+    //     limit: 3000,
+    //     sceneCenterLatRange: [$scope.bounds.northEast.lat, $scope.bounds.southWest.lat],
+    //     // mod function here supports negative modulo in the 'expected fashion'
+    //     // we are treating the longitude this way to support multiple rotations around the earth
+    //     sceneCenterLonRange: [mod($scope.bounds.northEast.lng + 180, 360) - 180, mod($scope.bounds.southWest.lng + 180, 360) - 180],
+    //     continuous: continuous
+    //   });
+
+    //   $http.get(endpoint + '/landsat?search=' + $scope.searchString, { timeout: canceller.promise })
+    //     .success(function(data) {
+    //     setInfoPane(); // Hide info pane so it doesn't flash when results are redrawn
+
+    //     console.log("Выполнили запрос по АПИ и получили результат:", data);
+
+
+    //     var total = data.meta.found;
+    //     $scope.results = [];
+    //     $scope.markers = {};
+    //     // clear histograms
+    //     d3.select('.cloudCoverSlider svg').selectAll('.bar').remove();
+    //     d3.select('.sunAzimuthSlider svg').selectAll('.bar').remove();
+    //     // only renew results if we have a 'resonable' number
+    //     if (total < 3000){
+    //       for (var i=0; i < data.results.length; i++){
+    //         var scene = data.results[i];
+    //         scene.className = scene.sceneID + '-' + scene.row + '-' + scene.path;
+    //         scene.lat = scene.sceneCenterLatitude;
+    //         // correction for being on "left or right earths"
+    //         // we force everything to be in our map range
+    //         // rotate according to which part of the range the scene is in
+    //         // for continuous ranges, it doesn't matter but this covers all cases
+    //         if (scene.sceneCenterLongitude > 0) {
+    //           scene.lng = scene.sceneCenterLongitude + Math.floor(($scope.bounds.southWest.lng + 180) / 360) * 360;
+    //         }
+    //         else {
+    //           scene.lng = scene.sceneCenterLongitude + Math.floor(($scope.bounds.northEast.lng + 180) / 360) * 360;
+    //         }
+    //         scene.icon = {};
+    //         scene.icon.type = 'div';
+    //         scene.icon.className = 'map-icon text-center';
+    //         scene.downloadURL = 'https://storage.googleapis.com/earthengine-public/landsat/L8/' + zeroPad(scene.path,3) + '/' + zeroPad(scene.row,3) + '/' + scene.sceneID + '.tar.bz';
+    //         $scope.results.push(scene);
+    //       }
+    //       updateMarkers();
+    //       if ($scope.openFilter === 'cloud' || $scope.openFilter === 'sun' ){
+    //         var helperNames = ($scope.openFilter === 'cloud') ? {main:'cloudCover', val: 'cloud_coverage', bound: 100, bin: 20} : {main:'sunAzimuth', val: 'sunAzimuth', bound: 180, bin: 36};
+    //         var vals = $scope.results.map(function(result){ return Math.max(result[helperNames.val],0); });
+    //         if ($scope.openFilter === 'sun'){
+    //           vals = vals.filter(function(sun){ return sun > 0;});
+    //         }
+    //         var size = getSize($scope.openFilter);
+    //         $scope.updateHistogram('.' + helperNames.main + 'Slider', vals, [0, helperNames.bound], helperNames.bin, size);
+    //       }
+    //     } else {
+    //       // Not showing anything because we have too many results, let user know
+    //       var msg = 'Слишком много данных, чтобы отобразить их на карте!<br/><br/>' +
+    //                 'Попробуйте приблизиться к области интереса или уменьшить диапазон даты.';
+    //       setInfoPane(msg); // Show helpful message
+    //       // also clear paths and rowPath selection and selectedResult because why not
+    //       $scope.paths = {};
+    //       $scope.rowPathSelect = null;
+    //       $scope.selectedResult = null; // should either clear the selection or prevent the message
+    //     }
+
+    //     // stop the spinner
+    //     $scope.spinner.stop();
+    //   }).error(function (data, status) {
+    //     // need to check for an error because cancelling the request also sends us here
+    //     if (status !== 0) {
+    //       $scope.results = [];
+    //       var msg = 'Похоже что-то пошло не так с сервисом, который предоставляет снимки.';
+    //       $scope.satellite = true;
+    //       $scope.satGif = $sce.trustAsHtml('<img src="images/satellite.gif" />');
+    //       if (data && data.error && data.error.code) {
+    //         if (data.error.code === 'NOT_FOUND') {
+    //           msg = 'Похоже, что вы зашли слишком далеко с приближением к области интереса, поэтому попробуйте отдалиться, чтобы получить данные';
+    //           $scope.satellite = false;
+    //         }
+    //       }
+    //       setInfoPane(msg); // Show nice error message
+    //       $scope.paths = {};
+    //       $scope.rowPathSelect = null;
+    //       $scope.selectedResult = null; // should either clear the selection or prevent the message
+    //       // stop the spinner
+    //       $scope.spinner.stop();
+    //     }
+    //   });
+    // };
 
     /**
      * Filter function used by ng-repeat.
@@ -670,9 +831,49 @@ angular.module('dauriaSearchApp')
     };
 
     $scope.openAdvancedDownload = function () {
+      console.log("Кликнули по 'Загрузка каналов'");
+
       $scope.modalInstance = $modal.open({
         templateUrl: 'views/advanced.html',
         controller: 'AdvancedCtrl',
+        size: 'lg',
+        resolve: {
+          selectedResult: function () {
+            console.log($scope.selectedResult);
+            return $scope.selectedResult;
+          }
+        }
+      });
+
+      console.log("Объект modalInstance - ", $scope.modalInstance);
+    };
+
+
+    $scope.openWaitingModal = function() {
+      console.log("Кликнули по 'Подождите'");
+
+      $scope.modalInstance = $modal.open({
+        templateUrl: 'views/waiting.html',
+        controller: 'ProcessingCtrl',
+        size: 'lg',
+        resolve: {
+          selectedResult: function () {
+
+            return $scope.selectedResult;
+          }
+        }
+      });
+
+      console.log("Объект modalInstance - ", $scope.modalInstance);
+    };
+
+
+    $scope.openProcessingDownload = function() {
+      console.log("Кликнули по 'Обработка'");
+
+      $scope.modalInstance = $modal.open({
+        templateUrl: 'views/processingDownload.html',
+        controller: 'ProcessingCtrl',
         size: 'lg',
         resolve: {
           selectedResult: function () {
@@ -680,6 +881,8 @@ angular.module('dauriaSearchApp')
           }
         }
       });
+
+      console.log("Объект modalInstance - ", $scope.modalInstance);
     };
 
     /**
@@ -723,16 +926,52 @@ angular.module('dauriaSearchApp')
     }
 
 
+
+
+    //NEW_ARA: НОВАЯ функция для конструирования параметров в GET запросе к НОВОМУ АПИ
+
+    function NEW_ERA_QUERY_CONSTRUCTOR(options) {
+
+      const collectionName = "landsat-8-l1"; // нужен только ландсат
+
+      const queryObj = {"collection" : {"eq" : collectionName}}
+      const serializedJson = JSON.stringify(queryObj);
+      const encodedStr = encodeURIComponent(serializedJson);
+
+      let queryStr = `?query=${encodedStr}`;
+
+      const dateRangeOrigin = options.dateRange || ['2014-01-01', '2015-01-05'];
+
+      queryStr += `&time=${dateRangeOrigin[0]}/${dateRangeOrigin[1]}`; // фильтруем по дате
+
+      if (options.limit) {
+        queryStr += `&limit=${options.limit}`; // ограничиваем количество снимков
+      }
+
+      const latMinMaxRanges = options.sceneCenterLatRange.sort(sortNumber) || ['-90', '90']; // получаем границы широт текущего экстента, чтобы сформировать bbox
+
+      if (options.continuous) console.log("Continous присутствует в параметрах!") // в прошлой ревизии этот параметр на что-то влиял, нужно проверить, если что-то пойдет не так
+
+      const lonMinMaxRanges = options.sceneCenterLonRange.sort(sortNumber) || ['-180', '180']; // получаем границы долгот текущего экстента, чтобы сформировать bbox
+
+      const bbox = [parseFloat(lonMinMaxRanges[0].toFixed(4)), parseFloat(latMinMaxRanges[0].toFixed(4)), parseFloat(lonMinMaxRanges[1].toFixed(4)), parseFloat(latMinMaxRanges[1].toFixed(4))]
+
+      queryStr += `&bbox=[${bbox}]`; // это ограничивает область поиска до текущего экстента юзера
+
+      return queryStr;
+    }
+
+
     //NEW_ARA: функция для конструирования параметров в GET запросе к АПИ
 
     function queryConstructor (options) {
       var queryString;
       var query = [];
-      
+
 
       //NEW_ERA: GET /search?time=2019-01-01/2019-02-02 -> пример установки параметров в строке запроса для периода времени
 
-      //NEW_ERA: ЧТОБЫ ПЕРЕДАВАТЬ QUERY В GET НЕОБХОДИМО: 
+      //NEW_ERA: ЧТОБЫ ПЕРЕДАВАТЬ QUERY В GET НЕОБХОДИМО:
       // 1. СДЕЛАТЬ ОБЪЕКТ QUERY КАК В ДОКЕ: {"eo:cloud_cover":{"lt":50}}
       // 2. ПРЕВРАТИТЬ ЭТОТ ОБЪЕКТ В СТРОКУ ЧЕРЕЗ JSON.stringify(object)
       // 3. ЗАКОДИРОВАТЬ СТРОКУ ДЛЯ ВСТАВКИ В URL ЧЕРЕЗ encodeURIComponent(str)
