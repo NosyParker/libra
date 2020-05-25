@@ -255,7 +255,7 @@ angular.module('dauriaSearchApp')
 
       $scope.searchString = NEW_ERA_QUERY_CONSTRUCTOR({
         dateRange: [$scope.dateRangeStart, $scope.dateRangeEnd],
-        limit: 500,
+        limit: 2000,
         sceneCenterLatRange: [$scope.bounds.northEast.lat, $scope.bounds.southWest.lat],
         // mod function here supports negative modulo in the 'expected fashion'
         // we are treating the longitude this way to support multiple rotations around the earth
@@ -282,7 +282,7 @@ angular.module('dauriaSearchApp')
           d3.select('.cloudCoverSlider svg').selectAll('.bar').remove();
           d3.select('.sunAzimuthSlider svg').selectAll('.bar').remove();
 
-          if (total < 3000) {
+          if (total < 2000) {
             for (var i = 0; i < resultLength; i++) {
               var scene = $scope.NEW_ERA_ADAPTER_FOR_SCENE_RESULTS(results[i]);
 
