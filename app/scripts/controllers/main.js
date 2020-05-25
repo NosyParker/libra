@@ -125,33 +125,33 @@ angular.module('dauriaSearchApp')
     // For keeping some stuff clean until after the first zoom
     $scope.firstZoomDone = false;
 
-    // Move to user's IP location, fall back to east of San Fran
-    // NEW_ERA: ставим Башкортостан по центру экрана вместо Сан-Франциско
-    var demoCenter = { lat: 54.5, lng: 56.5, zoom: 7 };
-    $http.get('https://vast-coast-1838.herokuapp.com/location')
-      .success(function(data) {
-        // Do nothing if the user has already moved their location
-        if (userHasMoved()) { return;}
+    ////Move to user's IP location, fall back to east of San Fran
+    ////NEW_ERA: ставим Башкортостан по центру экрана вместо Сан-Франциско
+    // var demoCenter = { lat: 54.5, lng: 56.5, zoom: 7 };
+    // $http.get('https://vast-coast-1838.herokuapp.com/location')
+    //   .success(function(data) {
+    //     // Do nothing if the user has already moved their location
+    //     if (userHasMoved()) { return;}
 
-        // We got a response, make sure we have lat/lon and set it
-        if (data && data.location && data.location.lat && data.location.lon) {
-          $scope.center = {
-            lat: parseFloat(data.location.lat),
-            lng: parseFloat(data.location.lon),
-            zoom: 6
-          }; // Centered on browser's IP
-          setTimeout(function(){ $scope.firstZoomDone = true; },500);
-        } else {
-          // Do nothing if the user has already moved their location
-          if (userHasMoved()) { return; }
-          $scope.center = demoCenter; // centered on east of San Francisco
-          setTimeout(function(){ $scope.firstZoomDone = true; },500);
-        }
-      }).
-      error(function() {
-        $scope.center = demoCenter; // centered on east of San Francisco
-        setTimeout(function(){ $scope.firstZoomDone = true; },500);
-      });
+    //     // We got a response, make sure we have lat/lon and set it
+    //     if (data && data.location && data.location.lat && data.location.lon) {
+    //       $scope.center = {
+    //         lat: parseFloat(data.location.lat),
+    //         lng: parseFloat(data.location.lon),
+    //         zoom: 6
+    //       }; // Centered on browser's IP
+    //       setTimeout(function(){ $scope.firstZoomDone = true; },500);
+    //     } else {
+    //       // Do nothing if the user has already moved their location
+    //       if (userHasMoved()) { return; }
+    //       $scope.center = demoCenter; // centered on east of San Francisco
+    //       setTimeout(function(){ $scope.firstZoomDone = true; },500);
+    //     }
+    //   }).
+    //   error(function() {
+    //     $scope.center = demoCenter; // centered on east of San Francisco
+    //     setTimeout(function(){ $scope.firstZoomDone = true; },500);
+    //   });
 
     $scope.$watchGroup(['bounds','dateRangeStart','dateRangeEnd'], function() {
       $scope.cleanPaths();

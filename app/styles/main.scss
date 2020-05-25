@@ -635,6 +635,12 @@ body {
   input[type=checkbox]:checked + label:before {
     background: rgba(255,255,255,0.6);
   }
+
+//  NEWERA
+  input[type=radio]:checked + label:before {
+    background: rgba(255,255,255,0.6);
+  }
+
 }
 
 .download-individual {
@@ -651,6 +657,23 @@ body {
     }
   }
 }
+
+// NEWERA
+.download-processig {
+  text-align: center;
+  .btn {
+    font-weight: 100;
+    font-size: 18px;
+    letter-spacing: 0.1em;
+    background: rgba(35,24,80,0.8);
+    border: 0;
+
+    &:hover {
+      background: #231850;
+    }
+  }
+}
+
 
 .band-options {
   div {
