@@ -20,7 +20,7 @@ angular.module('dauriaSearchApp')
     var canceller = $q.defer();
 
     //NEW_ERA: новое АПИ для поиска
-    const NEW_ERA_ENDPOINT = 'https://sat-api.developmentseed.org/stac/search';
+    var NEW_ERA_ENDPOINT = 'https://sat-api.developmentseed.org/stac/search';
 
 
 
@@ -187,17 +187,17 @@ angular.module('dauriaSearchApp')
 
     // NEW_ERA: адаптер, чтобы из данных нового API получить старые аналоги
     $scope.NEW_ERA_ADAPTER_FOR_SCENE_RESULTS = function(sceneOfNewApi) {
-      let scene = {};
+      var scene = {};
 
       scene.acquisitionDate = new Date(sceneOfNewApi.properties.datetime).toISOString().slice(0,10);
       scene.sceneID = sceneOfNewApi.properties["landsat:scene_id"];
       scene.product_id = sceneOfNewApi.properties["landsat:product_id"];
       scene.row = sceneOfNewApi.properties["eo:row"];
       scene.path = sceneOfNewApi.properties["eo:column"];;
-      scene.className = `${scene.sceneID}-${scene.row}-${scene.path}`;
+      scene.className = scene.sceneID + "-" + scene.row + "-" + scene.path;
 
-      let sceneCenterLongitude = (sceneOfNewApi.bbox[0] + sceneOfNewApi.bbox[2]) / 2;
-      let sceneCenterLatitude = (sceneOfNewApi.bbox[1] + sceneOfNewApi.bbox[3]) / 2;
+      var sceneCenterLongitude = (sceneOfNewApi.bbox[0] + sceneOfNewApi.bbox[2]) / 2;
+      var sceneCenterLatitude = (sceneOfNewApi.bbox[1] + sceneOfNewApi.bbox[3]) / 2;
 
       scene.sceneCenterLatitude = sceneCenterLatitude;
       scene.lat = scene.sceneCenterLatitude;
@@ -263,7 +263,7 @@ angular.module('dauriaSearchApp')
         continuous: continuous
       });
 
-      const finalQueryStr = `${NEW_ERA_ENDPOINT}${$scope.searchString}`;
+      var finalQueryStr = NEW_ERA_ENDPOINT + $scope.searchString;
       console.log("Итоговая строка запроса для АПИ: ", finalQueryStr)
 
       $http.get(finalQueryStr, { timeout: canceller.promise })
@@ -272,9 +272,9 @@ angular.module('dauriaSearchApp')
 
           console.log("Выполнили запрос по НОВОМУ АПИ и получили результат:", data);
 
-          let total = data.meta.found;
-          const results = data.features;
-          const resultLength = results.length;
+          var total = data.meta.found;
+          var results = data.features;
+          var resultLength = results.length;
           $scope.results = [];
           $scope.markers = {};
 
@@ -283,8 +283,8 @@ angular.module('dauriaSearchApp')
           d3.select('.sunAzimuthSlider svg').selectAll('.bar').remove();
 
           if (total < 3000) {
-            for (let i = 0; i < resultLength; i++) {
-              const scene = $scope.NEW_ERA_ADAPTER_FOR_SCENE_RESULTS(results[i]);
+            for (var i = 0; i < resultLength; i++) {
+              var scene = $scope.NEW_ERA_ADAPTER_FOR_SCENE_RESULTS(results[i]);
 
               $scope.results.push(scene);
             }
@@ -932,31 +932,31 @@ angular.module('dauriaSearchApp')
 
     function NEW_ERA_QUERY_CONSTRUCTOR(options) {
 
-      const collectionName = "landsat-8-l1"; // нужен только ландсат
+      var collectionName = "landsat-8-l1"; // нужен только ландсат
 
-      const queryObj = {"collection" : {"eq" : collectionName}}
-      const serializedJson = JSON.stringify(queryObj);
-      const encodedStr = encodeURIComponent(serializedJson);
+      var queryObj = {"collection" : {"eq" : collectionName}}
+      var serializedJson = JSON.stringify(queryObj);
+      var encodedStr = encodeURIComponent(serializedJson);
 
-      let queryStr = `?query=${encodedStr}`;
+      var queryStr = "?query=" + encodedStr;
 
-      const dateRangeOrigin = options.dateRange || ['2014-01-01', '2015-01-05'];
+      var dateRangeOrigin = options.dateRange || ['2014-01-01', '2015-01-05'];
 
-      queryStr += `&time=${dateRangeOrigin[0]}/${dateRangeOrigin[1]}`; // фильтруем по дате
+      queryStr += "&time=" + dateRangeOrigin[0] + "/" + dateRangeOrigin[1]; // фильтруем по дате
 
       if (options.limit) {
-        queryStr += `&limit=${options.limit}`; // ограничиваем количество снимков
+        queryStr += "&limit=" + options.limit; // ограничиваем количество снимков
       }
 
-      const latMinMaxRanges = options.sceneCenterLatRange.sort(sortNumber) || ['-90', '90']; // получаем границы широт текущего экстента, чтобы сформировать bbox
+      var latMinMaxRanges = options.sceneCenterLatRange.sort(sortNumber) || ['-90', '90']; // получаем границы широт текущего экстента, чтобы сформировать bbox
 
       if (options.continuous) console.log("Continous присутствует в параметрах!") // в прошлой ревизии этот параметр на что-то влиял, нужно проверить, если что-то пойдет не так
 
-      const lonMinMaxRanges = options.sceneCenterLonRange.sort(sortNumber) || ['-180', '180']; // получаем границы долгот текущего экстента, чтобы сформировать bbox
+      var lonMinMaxRanges = options.sceneCenterLonRange.sort(sortNumber) || ['-180', '180']; // получаем границы долгот текущего экстента, чтобы сформировать bbox
 
-      const bbox = [parseFloat(lonMinMaxRanges[0].toFixed(4)), parseFloat(latMinMaxRanges[0].toFixed(4)), parseFloat(lonMinMaxRanges[1].toFixed(4)), parseFloat(latMinMaxRanges[1].toFixed(4))]
+      var bbox = [parseFloat(lonMinMaxRanges[0].toFixed(4)), parseFloat(latMinMaxRanges[0].toFixed(4)), parseFloat(lonMinMaxRanges[1].toFixed(4)), parseFloat(latMinMaxRanges[1].toFixed(4))]
 
-      queryStr += `&bbox=[${bbox}]`; // это ограничивает область поиска до текущего экстента юзера
+      queryStr += "&bbox=" + "[" + bbox + "]"; // это ограничивает область поиска до текущего экстента юзера
 
       return queryStr;
     }
