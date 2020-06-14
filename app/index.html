@@ -7,7 +7,8 @@
     <meta name="viewport" content="width=device-width">
     <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
     <!-- build:css(.) styles/vendor.css -->
-    <link rel="stylesheet" href="bower_components/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="styles/leaflet.draw.css" />
+    <link rel="stylesheet" href="bower_components/leaflet/dist/leaflet.css" />
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/font-awesome/css/font-awesome.css" />
     <link rel="stylesheet" href="bower_components/nouislider/distribute/jquery.nouislider.min.css" />
@@ -51,7 +52,7 @@
             </div>
           </div>
           <div class="map">
-            <leaflet defaults="defaults" markers="markers" paths="paths" center="center" bounds="bounds" height="100%" width="100%"></leaflet>
+            <leaflet layers="layers" markers="markers" paths="paths" center="center" bounds="bounds" controls="controls" height="100%" width="100%"></leaflet>
           </div>
           <div class="spin-box" id="spinner"></div>
         </div>
@@ -163,6 +164,7 @@
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
     <script src="bower_components/moment/moment.js"></script>
     <!-- endbower -->
+    <script src="./leaflet.draw-src.js"></script>
     <!-- endbuild -->
 
         <!-- build:js({.tmp,app}) scripts/scripts.js -->

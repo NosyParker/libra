@@ -87,6 +87,62 @@ angular.module('dauriaSearchApp')
       [ -90, 180 ]
     ]);
 
+    var drawnItems = new L.FeatureGroup();
+    var controls = {draw: {}, edit: {featureGroup: drawnItems}};
+
+    // это нужно, чтобы можно было очерчивать область интереса и сохранять ее на карте
+    var layers = {
+      baselayers: {
+          mapbox_light: {
+              name: 'Mapbox Light',
+              url: 'https://api.tiles.mapbox.com/v4/nate.kna67bkd/{z}/{x}/{y}.png?access_token={apikey}',
+              type: 'xyz',
+              layerOptions: {
+                  apikey: 'pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJnUi1mbkVvIn0.018aLhX0Mb0tdtaT2QNe2Q',
+                  mapid: 'bufanuvols.lia22g09'
+              },
+              layerParams: {
+                  showOnSelector: false
+              }
+          }
+      },
+      overlays: {
+          draw: {
+              name: 'draw',
+              type: 'group',
+              visible: true,
+              layerParams: {
+                  showOnSelector: false
+              }
+          }
+      }
+  };
+
+
+    // вешаем эвенты на очерчивание области интереса и формирования GeoJSON
+    leafletData.getMap().then(function(map) {
+      console.log("map: ", map);
+
+      map.on("draw:created", function(event) {
+        var layer = event.layer;
+
+        console.log("event draw created fired!! ", event);
+
+        console.log(JSON.stringify(layer.toGeoJSON()));
+
+        leafletData.getLayers().then(function(layers) {
+          console.log("layers obj: ", layers);
+
+          var drawnItems = layers.overlays.draw;
+
+          console.log("drawitems: ", drawnItems);
+
+          drawnItems.addLayer(layer);
+        });
+      });
+    });
+
+
     $scope.defaults = {
       tileLayer: 'https://api.tiles.mapbox.com/v4/nate.kna67bkd/{z}/{x}/{y}.png?access_token=pk.eyJ1IjoiZGV2c2VlZCIsImEiOiJnUi1mbkVvIn0.018aLhX0Mb0tdtaT2QNe2Q',
       maxZoom: 14
@@ -112,7 +168,9 @@ angular.module('dauriaSearchApp')
           enable: ['mouseover', 'mouseout']
         }
       },
-      paths: {}
+      paths: {},
+      controls: controls,
+      layers: layers
     });
 
     // Get starting center to see if the user has moved map and
