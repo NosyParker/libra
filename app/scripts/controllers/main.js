@@ -88,7 +88,26 @@ angular.module('dauriaSearchApp')
     ]);
 
     var drawnItems = new L.FeatureGroup();
-    var controls = {draw: {}, edit: {featureGroup: drawnItems}};
+    var controls = {draw: {
+      polygon: {
+      allowIntersection: false,
+      drawError: {
+        color: '#e1e100',
+        message: '<strong>Oh snap!<strong> you can\'t draw that!'
+      },
+      shapeOptions: {
+        color: '#97009c'
+      }
+    },
+    polyline: false,
+    circle: false,
+    rectangle: false,
+    marker: false,
+    },
+  edit: {
+    featureGroup: drawnItems,
+    remove: true
+  }}
 
     // это нужно, чтобы можно было очерчивать область интереса и сохранять ее на карте
     var layers = {
@@ -122,7 +141,7 @@ angular.module('dauriaSearchApp')
     // вешаем эвенты на очерчивание области интереса и формирования GeoJSON
     leafletData.getMap().then(function(map) {
       console.log("map: ", map);
-
+      map.addLayer(drawnItems);
       map.on("draw:created", function(event) {
         var layer = event.layer;
 
@@ -132,9 +151,6 @@ angular.module('dauriaSearchApp')
 
         leafletData.getLayers().then(function(layers) {
           console.log("layers obj: ", layers);
-
-          var drawnItems = layers.overlays.draw;
-
           console.log("drawitems: ", drawnItems);
 
           drawnItems.addLayer(layer);
