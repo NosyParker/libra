@@ -87,27 +87,35 @@ angular.module('dauriaSearchApp')
       [ -90, 180 ]
     ]);
 
+
+    $scope.currentPolygonLayer = null;
+
+    // создаем спец.объект-контейнер для полигонов
     var drawnItems = new L.FeatureGroup();
-    var controls = {draw: {
-      polygon: {
-      allowIntersection: false,
-      drawError: {
-        color: '#e1e100',
-        message: '<strong>Oh snap!<strong> you can\'t draw that!'
+
+    // здесь определяем элементы управления: нам нужно только добавление-удаление кастомных областей
+    var controls = {
+      draw: {
+        polygon: {
+          allowIntersection: false,
+          drawError: {
+            color: '#e1e100',
+            message: '<strong>Упс!<strong> Этот полигон не получится отрисовать!'
+          },
+          shapeOptions: {
+            color: '#97009c'
+          }
+        },
+        polyline: false,
+        circle: false,
+        rectangle: false,
+        marker: false,
       },
-      shapeOptions: {
-        color: '#97009c'
+      edit: {
+        featureGroup: drawnItems,
+        remove: true
       }
-    },
-    polyline: false,
-    circle: false,
-    rectangle: false,
-    marker: false,
-    },
-  edit: {
-    featureGroup: drawnItems,
-    remove: true
-  }}
+    }
 
     // это нужно, чтобы можно было очерчивать область интереса и сохранять ее на карте
     var layers = {
@@ -140,21 +148,60 @@ angular.module('dauriaSearchApp')
 
     // вешаем эвенты на очерчивание области интереса и формирования GeoJSON
     leafletData.getMap().then(function(map) {
-      console.log("map: ", map);
+      console.log("выводим объект MAP: ", map);
+
       map.addLayer(drawnItems);
+
+      // биндим обработчик на эвент добавления нового полигона
       map.on("draw:created", function(event) {
         var layer = event.layer;
 
         console.log("event draw created fired!! ", event);
 
-        console.log(JSON.stringify(layer.toGeoJSON()));
-
         leafletData.getLayers().then(function(layers) {
-          console.log("layers obj: ", layers);
-          console.log("drawitems: ", drawnItems);
+
+          console.log("Выводим объект LAYERS: ", layers);
+          console.log("Выводим текущее состояние объекта-контейнера DRAWITEMS: ", drawnItems);
 
           drawnItems.addLayer(layer);
+
+          $scope.currentPolygonLayer = layer; // сохраняем новосозданный полигон как текущий-выбранный
+
+          console.log("В скоупе у нас объект полигона после добавления, на нем посчитали GeoJSON:");
+          console.log(JSON.stringify($scope.currentPolygonLayer.toGeoJSON()));
         });
+      });
+
+      // биндим обработчик на эвент удаления полигонов
+      map.on("draw:deleted", function(event) {
+        console.log("event draw:deleted fired!! ", event);
+
+        // удаляем именно так
+        event.layers.eachLayer(layer => {
+          console.log("Итерируемся по удаляемому полигону: ", layer);
+
+          drawnItems.removeLayer(layer);
+        });
+
+        console.log("Выводим текущее состояние объекта-контейнера DRAWITEMS: ", drawnItems);
+
+        var polygons = drawnItems.getLayers(); // получаем из контейнера все объекты-полигоны
+        if (polygons.length) {
+          $scope.currentPolygonLayer = polygons[polygons.length-1]; // предыдущий созданный полигон ставим как текущий
+        }
+        else {
+          $scope.currentPolygonLayer = null; // если же все удалено, то ставим NULL
+        }
+
+        // ОТЛАДОЧНЫЙ КОД
+        console.log("В скоупе у нас GeoJSON текущего полигона после удаления полигона");
+        if ($scope.currentPolygonLayer) {
+          console.log(JSON.stringify($scope.currentPolygonLayer.toGeoJSON()));
+        }
+        else {
+          console.log("все удалили, нет вообще ничего!");
+        }
+
       });
     });
 
@@ -923,23 +970,23 @@ angular.module('dauriaSearchApp')
     };
 
 
-    $scope.openWaitingModal = function() {
-      console.log("Кликнули по 'Подождите'");
+    // $scope.openWaitingModal = function() {
+    //   console.log("Кликнули по 'Подождите'");
 
-      $scope.modalInstance = $modal.open({
-        templateUrl: 'views/waiting.html',
-        controller: 'ProcessingCtrl',
-        size: 'lg',
-        resolve: {
-          selectedResult: function () {
+    //   $scope.modalInstance = $modal.open({
+    //     templateUrl: 'views/waiting.html',
+    //     controller: 'ProcessingCtrl',
+    //     size: 'lg',
+    //     resolve: {
+    //       selectedResult: function () {
 
-            return $scope.selectedResult;
-          }
-        }
-      });
+    //         return $scope.selectedResult;
+    //       }
+    //     }
+    //   });
 
-      console.log("Объект modalInstance - ", $scope.modalInstance);
-    };
+    //   console.log("Объект modalInstance - ", $scope.modalInstance);
+    // };
 
 
     $scope.openProcessingDownload = function() {
@@ -952,6 +999,9 @@ angular.module('dauriaSearchApp')
         resolve: {
           selectedResult: function () {
             return $scope.selectedResult;
+          },
+          currentPolygonLayer: function() {
+            return $scope.currentPolygonLayer;
           }
         }
       });

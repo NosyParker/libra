@@ -1,7 +1,7 @@
 <div class="modal-header">
     <h3 class="modal-title">Загрузка обработанного снимка</h3>
   </div>
-  <div class="modal-body advanced-modal">
+  <div class="modal-body advanced-modal" id="selectProcessOption">
     <p class="text-center">Выберите комбинацию для RGB-каналов или индекс</p>
     <div class="row band-selection">
       <div class="col-md-12 band-options">
@@ -36,29 +36,29 @@
         <div class="col-md-12 band-options">
             <div>
                 <input type="radio" name="band" id="band-7"
-                    value="expression=((1/2)*(2*(b5+1)-math.sqrt(pow((2*b5+1),2)-8*(b5-b4))))">
+                    value="expression=msavi2">
                 <label for="band-7">MSAVI2: Модифицированный индекс растительности с коррекцией по почве</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-8" value="expression=((b5-b4)/(b5+b4))">
+                <input type="radio" name="band" id="band-8" value="expression=ndvi">
                 <label for="band-8">NDVI: Нормализированный вегетационный индекс</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-9" value="expression=((b3-b4)/(b3+b4-b2))">
+                <input type="radio" name="band" id="band-9" value="expression=vari">
                 <label for="band-9">VARI: Индекс устойчивости к видимой атмосфере</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-10" value="expression=((b2-b5)/(b2+b5))">
+                <input type="radio" name="band" id="band-10" value="expression=ndsi">
                 <label for="band-10">NDSI: Стандартизованный индекс различий снежного покрова</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-11" value="expression=((b5-b4)/(b5+b4))">
+                <input type="radio" name="band" id="band-11" value="expression=ndmi">
                 <label for="band-11">NDMI: Стандартизованный индекс различий увлажненности</label>
             </div>
         </div>
     </div>
     <hr>
     <div class="download-individual">
-      <a id="download-image" class="btn btn-primary" ng-bind-template="Обработать и загрузить" ng-click="processAndDownloadImage()"></a>
+      <a id="download-image" class="btn btn-primary" ng-disabled="!canConfirmProcessing" ng-bind-template="Обработать и загрузить" ng-click="processAndDownloadImage()"></a>
     </div>
   </div>

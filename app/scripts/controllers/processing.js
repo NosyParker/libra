@@ -8,7 +8,8 @@
  * Controller of the dauriaSearchApp
  */
 angular.module('dauriaSearchApp')
-  .controller('ProcessingCtrl', ['$scope', '$filter', 'selectedResult', function($scope, $filter, selectedResult) {
+  .controller('ProcessingCtrl', ['$scope', '$filter', '$http', 'selectedResult', 'currentPolygonLayer',
+              function($scope, $filter, $http, selectedResult, currentPolygonLayer) {
 
     // $scope.bandPrefill = function (array) {
     //   jQuery('.band-selection input').each(function(){
@@ -19,13 +20,21 @@ angular.module('dauriaSearchApp')
     //   }
     // };
 
+    $scope.canConfirmProcessing = currentPolygonLayer != null;
+
     jQuery('input[type="checkbox"]').on('change', function() {
         jQuery('input[type="checkbox"]').not(this).prop('checked', false);
      });
 
     $scope.processAndDownloadImage = function() {
-        var selectedBandCombunation = null;
+      if (!$scope.canConfirmProcessing) {
+        console.log("Оппачки, кто-то не начертил область интереса, обрабатывать нельзя без полигона!");
+        return;
+      }
         console.log("Мы находимся в ProcessingCtrl.processAndDownloadImage()")
+
+        var selectedExpOrBands = jQuery("#selectProcessOption input[type='radio']:checked").val();
+        console.log("Вот, что ты выбрал: ", selectedExpOrBands);
     };
 
 
