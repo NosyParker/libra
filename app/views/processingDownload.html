@@ -1,0 +1,64 @@
+<div class="modal-header">
+    <h3 class="modal-title">Загрузка обработанного снимка</h3>
+  </div>
+  <div class="modal-body advanced-modal">
+    <p class="text-center">Выберите комбинацию для RGB-каналов или индекс</p>
+    <div class="row band-selection">
+      <div class="col-md-12 band-options">
+        <div>
+            <input type="radio" name="band" id="band-1" value="bands=[4,3,2]" checked="true">
+            <label for="band-1">4-3-2 Естественные цвета</label>
+        </div>
+        <div>
+            <input type="radio" name="band" id="band-2" value="bands=[5,4,3]">
+            <label for="band-2">5-4-3 Традиционный инфракрасный</label>
+        </div>
+        <div>
+            <input type="radio" name="band" id="band-3" value="bands=[7,5,2]">
+            <label for="band-3">7-5-2 Ложные цвета для агрокультур + определение пожаров</label>
+        </div>
+        <div>
+            <input type="radio" name="band" id="band-4" value="bands=[7,6,4]">
+            <label for="band-4">7-6-4 Ложные цвета для урбанизации</label>
+        </div>
+        <div>
+            <input type="radio" name="band" id="band-5" value="bands=[5,6,4]">
+            <label for="band-5">5-6-4 Ложные цвета для отделения земли от воды</label>
+        </div>
+        <div>
+            <input type="radio" name="band" id="band-6" value="bands=[6,5,2]">
+            <label for="band-6">6-5-2 Ложные цвета для агрокультур</label>
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="row band-selection">
+        <div class="col-md-12 band-options">
+            <div>
+                <input type="radio" name="band" id="band-7"
+                    value="expression=((1/2)*(2*(b5+1)-math.sqrt(pow((2*b5+1),2)-8*(b5-b4))))">
+                <label for="band-7">MSAVI2: Модифицированный индекс растительности с коррекцией по почве</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-8" value="expression=((b5-b4)/(b5+b4))">
+                <label for="band-8">NDVI: Нормализированный вегетационный индекс</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-9" value="expression=((b3-b4)/(b3+b4-b2))">
+                <label for="band-9">VARI: Индекс устойчивости к видимой атмосфере</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-10" value="expression=((b2-b5)/(b2+b5))">
+                <label for="band-10">NDSI: Стандартизованный индекс различий снежного покрова</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-11" value="expression=((b5-b4)/(b5+b4))">
+                <label for="band-11">NDMI: Стандартизованный индекс различий увлажненности</label>
+            </div>
+        </div>
+    </div>
+    <hr>
+    <div class="download-individual">
+      <a id="download-image" class="btn btn-primary" ng-bind-template="Обработать и загрузить" ng-click="processAndDownloadImage()"></a>
+    </div>
+  </div>
