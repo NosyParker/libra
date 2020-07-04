@@ -36,29 +36,44 @@
         <div class="col-md-12 band-options">
             <div>
                 <input type="radio" name="band" id="band-7"
-                    value="expression=msavi2">
-                <label for="band-7">MSAVI2: Модифицированный индекс растительности с коррекцией по почве</label>
+                    value="expression=savi">
+                <label for="band-7">SAVI: Вегатационный индекс с коррекцией по почве</label>
             </div>
             <div>
                 <input type="radio" name="band" id="band-8" value="expression=ndvi">
                 <label for="band-8">NDVI: Нормализированный вегетационный индекс</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-9" value="expression=vari">
-                <label for="band-9">VARI: Индекс устойчивости к видимой атмосфере</label>
+                <input type="radio" name="band" id="band-9" value="expression=ndmi">
+                <label for="band-9">NDMI: Стандартизованный индекс различий увлажненности</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-10" value="expression=ndsi">
-                <label for="band-10">NDSI: Стандартизованный индекс различий снежного покрова</label>
+                <input type="radio" name="band" id="band-10" value="expression=gndvi">
+                <label for="band-10">GNDVI: Зеленый нормализованный разностный вегетационный индекс</label>
             </div>
             <div>
-                <input type="radio" name="band" id="band-11" value="expression=ndmi">
-                <label for="band-11">NDMI: Стандартизованный индекс различий увлажненности</label>
+                <input type="radio" name="band" id="band-11" value="expression=rvi">
+                <label for="band-11">Simple Ratio (SR)/RVI: Относительный вегетационный индекс</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-12" value="expression=evi">
+                <label for="band-12">EVI: Усовершенствованный вегетационный индекс</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-13" value="expression=clgreen">
+                <label for="band-13">ClGreen: Относительный индекс хлорофилла</label>
+            </div>
+            <div>
+                <input type="radio" name="band" id="band-14" value="expression=ndwi">
+                <label for="band-14">NDWI: Нормализованный разностный водный индекс</label>
             </div>
         </div>
     </div>
     <hr>
     <div class="download-individual">
-      <a id="download-image" class="btn btn-primary" ng-disabled="!canConfirmProcessing" ng-bind-template="Обработать и загрузить" ng-click="processAndDownloadImage()"></a>
+      <a id="download-image" class="btn btn-primary"
+            ng-disabled="!canConfirmProcessing"
+            ng-bind-template="Обработать и загрузить"
+            ng-click="processAndDownloadImage()"></a>
     </div>
   </div>

@@ -374,7 +374,7 @@ angular.module('dauriaSearchApp')
       // check continuity of longitude range (bool)
       var continuous = Math.floor(($scope.bounds.northEast.lng + 180) / 360) === Math.floor(($scope.bounds.southWest.lng + 180) / 360);
 
-      $scope.searchString = NEW_ERA_QUERY_CONSTRUCTOR({
+      $scope.searchString = NEW_ERA_QUERY_CONSTRUCTOR_FOR_POST({
         dateRange: [$scope.dateRangeStart, $scope.dateRangeEnd],
         limit: 2000,
         sceneCenterLatRange: [$scope.bounds.northEast.lat, $scope.bounds.southWest.lat],
@@ -384,10 +384,19 @@ angular.module('dauriaSearchApp')
         continuous: continuous
       });
 
-      var finalQueryStr = NEW_ERA_ENDPOINT + $scope.searchString;
-      console.log("Итоговая строка запроса для АПИ: ", finalQueryStr)
+      // var finalQueryStr = NEW_ERA_ENDPOINT + $scope.searchString;
+      console.log("Итоговый объект запроса для АПИ: ", $scope.searchString)
 
-      $http.get(finalQueryStr, { timeout: canceller.promise })
+      $http({
+        url:NEW_ERA_ENDPOINT,
+        method: "POST",
+        data: $scope.searchString,
+        headers: {
+          "Content-Type":"application/json;charset=utf-8",
+          "Accept":"application/geo+json"
+        },
+        timeout: canceller.promise
+      })
         .success(function (data) {
           setInfoPane(); // Hide info pane so it doesn't flash when results are redrawn
 
@@ -1084,6 +1093,43 @@ angular.module('dauriaSearchApp')
 
       return queryStr;
     }
+
+
+
+
+    function NEW_ERA_QUERY_CONSTRUCTOR_FOR_POST(options) {
+      var resultObj = {}
+
+      var query = {
+        collection: {
+          eq: "landsat-8-l1" // нужен только ландсат
+        }
+      }
+
+      resultObj["query"] = query;
+
+      if (options.limit) {
+        resultObj["limit"] = options.limit; // ограничиваем количество снимков
+      }
+
+      var dateRangeOrigin = options.dateRange || ['2014-01-01', '2015-01-05'];
+
+      resultObj["time"] = dateRangeOrigin[0] + "/" + dateRangeOrigin[1]; // фильтруем по дате
+
+      var latMinMaxRanges = options.sceneCenterLatRange.sort(sortNumber) || ['-90', '90']; // получаем границы широт текущего экстента, чтобы сформировать bbox
+
+      if (options.continuous) console.log("Continous присутствует в параметрах!") // в прошлой ревизии этот параметр на что-то влиял, нужно проверить, если что-то пойдет не так
+
+      var lonMinMaxRanges = options.sceneCenterLonRange.sort(sortNumber) || ['-180', '180']; // получаем границы долгот текущего экстента, чтобы сформировать bbox
+
+      var bbox = [parseFloat(lonMinMaxRanges[0].toFixed(4)), parseFloat(latMinMaxRanges[0].toFixed(4)), parseFloat(lonMinMaxRanges[1].toFixed(4)), parseFloat(latMinMaxRanges[1].toFixed(4))]
+
+      resultObj["bbox"] = bbox;
+
+
+      return resultObj;
+    }
+
 
 
     //NEW_ARA: функция для конструирования параметров в GET запросе к АПИ

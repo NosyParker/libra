@@ -8,66 +8,123 @@
  * Controller of the dauriaSearchApp
  */
 angular.module('dauriaSearchApp')
-  .controller('ProcessingCtrl', ['$scope', '$filter', '$http', 'selectedResult', 'currentPolygonLayer',
-              function($scope, $filter, $http, selectedResult, currentPolygonLayer) {
+  .controller('ProcessingCtrl', ['$scope', '$filter', '$http', 'selectedResult', 'currentPolygonLayer','$modal',
+              function($scope, $filter, $http, selectedResult, currentPolygonLayer, $modal) {
 
-    // $scope.bandPrefill = function (array) {
-    //   jQuery('.band-selection input').each(function(){
-    //     jQuery(this).prop('checked',false);
-    //   });
-    //   for (var i=0; i < array.length; i++) {
-    //     jQuery('#band-' + array[i]).prop('checked',true);
-    //   }
-    // };
+
+    console.log("выбранный снимок: ", selectedResult);
+
+    var CALC_ENDPOINT="http://localhost:5000/calc";
 
     $scope.canConfirmProcessing = currentPolygonLayer != null;
+    $scope.whatswrongwithyou = false;
+
+    $scope.errorMessage = null;
 
     jQuery('input[type="checkbox"]').on('change', function() {
         jQuery('input[type="checkbox"]').not(this).prop('checked', false);
      });
 
-    $scope.processAndDownloadImage = function() {
+
+    $scope.getAppendixFileName = function(bandsOrExp) {
+      if (bandsOrExp instanceof Array) {
+        return bandsOrExp.join("-");
+      }
+      else {
+        return bandsOrExp.toUpperCase();
+      }
+    }
+
+
+
+    $scope.processAndDownloadImage = function () {
       if (!$scope.canConfirmProcessing) {
-        console.log("Оппачки, кто-то не начертил область интереса, обрабатывать нельзя без полигона!");
+        $scope.errorMessage = "Вы не очертили область интереса! Обработка снимков возможно только в рамках области интереса";
+
+        $scope.modalInstance = $modal.open({
+          templateUrl: 'views/noAOIModal.html',
+          size: 'lg'
+        });
+
         return;
       }
-        console.log("Мы находимся в ProcessingCtrl.processAndDownloadImage()")
+
+      $scope.errorMessage = null;
+
+      $scope.modalInstance = $modal.open({
+        templateUrl: 'views/pleaseWaitWhileProcessing.html',
+        size: 'lg',
+        keyboard: false,
+        backdrop: 'static'
+        });
 
         var selectedExpOrBands = jQuery("#selectProcessOption input[type='radio']:checked").val();
+
         console.log("Вот, что ты выбрал: ", selectedExpOrBands);
-    };
 
+        var splittedSelectedExpOrBands = selectedExpOrBands.split('=');
 
+        console.log("засплитили выбранный вариант обработки: ", splittedSelectedExpOrBands);
 
-    // $scope.downloadBands = function () {
-    //   var bands = [];
-    //   jQuery('.band-selection input').each(function(){
-    //     if(jQuery(this).prop('checked') === true){
-    //       bands.push(jQuery(this).attr('value').replace('band-',''));
-    //     }
-    //   });
-    //   // AWS maintains different urls for pre collection 1
-    //   var collectionOneSwapDate = moment('2017-05-01', 'YYYY-MM-DD')
-    //   var urls = bands.map(function(band){
-    //     if (moment(selectedResult.acquisitionDate, 'YYYY-MM-DD') < collectionOneSwapDate) {
-    //       // replacing everything with revision 00 gets AWS bands more reliably
-    //       return 'https://landsat-pds.s3.amazonaws.com/L8/' + zeroPad(selectedResult.path,3) + '/' + zeroPad(selectedResult.row,3) + '/' + selectedResult.sceneID.slice(0, -2) + '00/' + selectedResult.sceneID.slice(0, -2) + '00_B' + band + '.TIF';
-    //     } else {
-    //       return 'https://landsat-pds.s3.amazonaws.com/c1/L8/' + zeroPad(selectedResult.path,3) + '/' + zeroPad(selectedResult.row,3) + '/' + selectedResult.product_id + '/' + selectedResult.product_id + '_B' + band + '.TIF';
-    //     }
+        var expOrBands = splittedSelectedExpOrBands[0];
+        var valuefOfExpOrBands = splittedSelectedExpOrBands[1];
 
-    //   });
-    //   multiDownload(urls);
-    // };
+        var geoJsonObj = currentPolygonLayer.toGeoJSON();
 
-    // function zeroPad(n,c) {
-    //   var s = String(n);
-    //   if (s.length < c) {
-    //     return zeroPad('0' + n,c);
-    //   }
-    //   else {
-    //     return s;
-    //   }
-    // }
+        console.log("сформировали geojson: ", geoJsonObj);
+
+        var targetQueryObj = { "aoi": geoJsonObj, "scene": selectedResult.product_id }
+        targetQueryObj[expOrBands] = expOrBands === "bands" ? JSON.parse(valuefOfExpOrBands) : valuefOfExpOrBands;
+
+        console.log("итоговый JSON перед отправкой: ", targetQueryObj);
+
+        $http({
+          method: "POST",
+          url: CALC_ENDPOINT,
+          data: targetQueryObj,
+          responseType: 'arraybuffer'
+          }).then(function successCallback(response) {
+                    $scope.modalInstance.close();
+                    console.log("вот этот ответ мы получили: ", response);
+
+                    var file = new Blob([response.data], { type: 'image/tiff' }); // считаем, что success-блок - это всегда файлик
+
+                    var appendix = $scope.getAppendixFileName(valuefOfExpOrBands);
+
+                    saveAs(file, selectedResult.product_id + '-' + appendix + '.tif');
+                  },
+                    function errorCallback(response) {
+                      console.log("что-то пошло не так в запросе на вычислении!!!: ", response);
+                      $scope.modalInstance.close();
+                      if (response.data) {
+                        ///// посмотри тут ответ, как сконвертить к json
+                        //// https://stackoverflow.com/questions/30052567/how-to-read-json-error-response-from-http-if-responsetype-is-arraybuffer
+                        var decodedString = String.fromCharCode.apply(null, new Uint8Array(response.data));
+                        var obj = JSON.parse(decodedString);
+                        console.log(obj);
+                        if (obj.message) {
+                          $scope.errorMessage = obj.message;
+                        }
+                        else {
+                          $scope.errorMessage = "Что-то пошло не так в запросе на обработку, попробуйте позднее!";
+                          // дальше нужно как-то показать это сообщение юзеру
+                        }
+                        $scope.modalInstance = $modal.open({
+                          templateUrl: 'views/errorMessageModal.html',
+                          size: 'lg',
+                          scope: $scope
+                        });
+                      }
+                      else {
+                        $scope.errorMessage = "Не удалось связаться с сервисом обработки!";
+                        $scope.modalInstance = $modal.open({
+                          templateUrl: 'views/errorMessageModal.html',
+                          size: 'lg',
+                          scope: $scope
+                        });
+                      }
+                    });
+
+                };
 
   }]);
